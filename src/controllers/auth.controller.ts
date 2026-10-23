@@ -1,9 +1,94 @@
-// Controller update 1
-// Controller update 9
-// Controller update 17
-// Controller update 25
-// Controller update 33
-// Controller update 41
-// Controller update 49
-// Controller update 57
-// Controller update 65
+import bcrypt from 'bcryptjs';
+import type { Request, Response } from 'express';
+import { AppError, conflict, notFound } from '@/middleware/error.middleware';
+import { signToken } from '@/middleware/auth.middleware';
+import { toPublicUser, UserModel, type Role, type User } from '@/models/user.model';
+import { sendSuccess } from '@/utils/helpers';
+
+const SALT_ROUNDS = 10;
+
+const session = (user: User) => ({
+  user: toPublicUser(user),
+  token: signToken({ sub: user.id, email: user.email, role: user.role }),
+});
+
+/**
+ * Self-service registration. The very first account becomes the store admin;
+ * after that, registration creates cashiers, and admins promote staff from
+ * the users endpoints.
+ */
+export async function register(req: Request, res: Response): Promise<void> {
+  const { name, email, password } = req.body as { name: string; email: string; password: string };
+  if (UserModel.findByEmail(email)) throw conflict('An account with that email already exists');
+  const role: Role = UserModel.count() === 0 ? 'admin' : 'cashier';
+  const user = UserModel.create({
+    name,
+    email,
+    passwordHash: await bcrypt.hash(password, SALT_ROUNDS),
+    role,
+  });
+  sendSuccess(res, session(user), 201);
+}
+
+export async function login(req: Request, res: Response): Promise<void> {
+  const { email, password } = req.body as { email: string; password: string };
+  const user = UserModel.findByEmail(email);
+  // Same message either way so the response does not reveal which emails exist.
+  const ok = user ? await bcrypt.compare(password, user.passwordHash) : false;
+  if (!user || !ok) throw new AppError('Invalid email or password', 401);
+  sendSuccess(res, session(user));
+}
+
+export async function me(req: Request, res: Response): Promise<void> {
+  const user = UserModel.findById(req.user!.sub);
+  if (!user) throw notFound('User');
+  sendSuccess(res, toPublicUser(user));
+}
+
+export async function updateMe(req: Request, res: Response): Promise<void> {
+  const user = UserModel.findById(req.user!.sub);
+  if (!user) throw notFound('User');
+  const { name, currentPassword, newPassword } = req.body as {
+    name?: string;
+    currentPassword?: string;
+    newPassword?: string;
+  };
+  let passwordHash: string | undefined;
+  if (newPassword) {
+    if (!(await bcrypt.compare(currentPassword ?? '', user.passwordHash))) {
+      throw new AppError('Current password is incorrect', 400);
+    }
+    passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+  }
+  UserModel.updateProfile(user.id, { name, passwordHash });
+  sendSuccess(res, toPublicUser(UserModel.findById(user.id)!));
+}
+
+export async function createStaff(req: Request, res: Response): Promise<void> {
+  const { name, email, password, role } = req.body as {
+    name: string;
+    email: string;
+    password: string;
+    role: Role;
+  };
+  if (UserModel.findByEmail(email)) throw conflict('An account with that email already exists');
+  const user = UserModel.create({
+    name,
+    email,
+    role,
+    passwordHash: await bcrypt.hash(password, SALT_ROUNDS),
+  });
+  sendSuccess(res, toPublicUser(user), 201);
+}
+
+export async function listStaff(_req: Request, res: Response): Promise<void> {
+  sendSuccess(res, UserModel.list());
+}
+
+export async function updateStaffRole(req: Request, res: Response): Promise<void> {
+  const target = UserModel.findById(req.params.id);
+  if (!target) throw notFound('User');
+  if (target.id === req.user!.sub) throw new AppError('You cannot change your own role', 400);
+  UserModel.updateRole(target.id, (req.body as { role: Role }).role);
+  sendSuccess(res, toPublicUser(UserModel.findById(target.id)!));
+}
