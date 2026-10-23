@@ -1,0 +1,18 @@
+# Runs the API with a persistent SQLite volume.
+#   cp .env.example .env   # set JWT_SECRET and STELLAR_MERCHANT_PUBLIC_KEY
+#   docker compose up --build
+services:
+  api:
+    build: .
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_PATH: /data/stellarpos.db
+    ports:
+      - "3000:3000"
+    volumes:
+      - stellarpos-data:/data
+    restart: unless-stopped
+
+volumes:
+  stellarpos-data:
