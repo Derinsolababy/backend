@@ -85,6 +85,7 @@ docker compose up --build    # API on :3000, data in the stellarpos-data volume
 | `npm test` | 56 Jest + Supertest tests against an in-memory database |
 | `npm run check` | Lint, type-check and test: what CI runs |
 | `npm run db:seed` | Seed the demo store (refuses to touch a non-empty database) |
+| `npm run db:backup` | Snapshot the database now; set `BACKUP_INTERVAL_HOURS` for automatic backups |
 
 ## API at a glance
 
