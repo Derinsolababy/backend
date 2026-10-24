@@ -61,6 +61,9 @@ CREATE TABLE IF NOT EXISTS transactions (
 );
 CREATE INDEX IF NOT EXISTS idx_transactions_created ON transactions(created_at);
 CREATE INDEX IF NOT EXISTS idx_transactions_status ON transactions(status);
+-- Analytics filter completed sales by date; customer pages list a customer's sales.
+CREATE INDEX IF NOT EXISTS idx_transactions_status_created ON transactions(status, created_at);
+CREATE INDEX IF NOT EXISTS idx_transactions_customer ON transactions(customer_id, created_at);
 
 CREATE TABLE IF NOT EXISTS transaction_items (
   id TEXT PRIMARY KEY,
@@ -73,6 +76,8 @@ CREATE TABLE IF NOT EXISTS transaction_items (
   line_total_cents INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_items_tx ON transaction_items(transaction_id);
+-- Top-products and archive-on-delete look items up by product.
+CREATE INDEX IF NOT EXISTS idx_items_product ON transaction_items(product_id);
 
 CREATE TABLE IF NOT EXISTS payments (
   id TEXT PRIMARY KEY,
