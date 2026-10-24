@@ -1,7 +1,9 @@
-import { api } from './helpers';
+import { api, useDatabase } from './helpers';
+
+useDatabase();
 
 describe('GET /health', () => {
-  it('reports OK without touching the database', async () => {
+  it('reports OK with the database up', async () => {
     const res = await api().get('/health').expect(200);
     expect(res.body).toMatchObject({
       status: 'OK',
