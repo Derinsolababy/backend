@@ -43,6 +43,11 @@ export const config = {
   database: {
     path: str('DATABASE_PATH', './data/stellarpos.db'),
   },
+  backup: {
+    dir: str('BACKUP_DIR', './data/backups'),
+    intervalHours: int('BACKUP_INTERVAL_HOURS', 0),
+    keep: int('BACKUP_KEEP', 14),
+  },
   store: {
     name: str('STORE_NAME', 'StellarPOS Store'),
     currency: str('STORE_CURRENCY', 'USD').toUpperCase(),

@@ -3,6 +3,7 @@ import { app } from '@/app';
 import { config } from '@/config/config';
 import { attachRealtime, closeRealtime } from '@/services/realtime';
 import { startPaymentWatcher, stopPaymentWatcher } from '@/services/paymentWatcher';
+import { startBackupSchedule, stopBackupSchedule } from '@/utils/backup';
 import { closeDatabase, connectDatabase } from '@/utils/database';
 import { logger } from '@/utils/logger';
 import { connectRedis } from '@/utils/redis';
@@ -18,6 +19,7 @@ async function start(): Promise<void> {
   setupQueues();
   attachRealtime(server);
   startPaymentWatcher();
+  startBackupSchedule();
 
   server.listen(config.port, () => {
     logger.info(`StellarPOS API listening on http://localhost:${config.port} (${config.env})`);
@@ -27,6 +29,7 @@ async function start(): Promise<void> {
 async function shutdown(signal: string): Promise<void> {
   logger.info(`${signal} received, shutting down`);
   stopPaymentWatcher();
+  stopBackupSchedule();
   await closeRealtime();
   server.close(() => {
     closeDatabase();

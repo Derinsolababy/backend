@@ -21,7 +21,8 @@
     "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\"",
     "type-check": "tsc --noEmit",
     "db:seed": "tsx src/scripts/seed.ts",
-    "check": "npm run lint && npm run type-check && npm test"
+    "check": "npm run lint && npm run type-check && npm test",
+    "db:backup": "tsx src/scripts/backup.ts"
   },
   "dependencies": {
     "@stellar/stellar-sdk": "^13.3.0",
