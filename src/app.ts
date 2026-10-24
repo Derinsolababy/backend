@@ -1,12 +1,12 @@
 import compression from 'compression';
 import cors from 'cors';
 import express from 'express';
-import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { config } from '@/config/config';
 import { errorHandler } from '@/middleware/error.middleware';
 import { notFoundHandler } from '@/middleware/notFound.middleware';
+import { DEFAULT_ROLE_LIMITS, roleRateLimit } from '@/middleware/rateLimit.middleware';
 import analyticsRoutes from '@/routes/analytics.routes';
 import authRoutes from '@/routes/auth.routes';
 import customerRoutes from '@/routes/customers.routes';
@@ -33,13 +33,11 @@ export function createApp(): express.Express {
   );
   app.use(
     '/api',
-    rateLimit({
-      windowMs: 60 * 1000,
-      limit: config.isTest ? 10_000 : 600,
-      standardHeaders: 'draft-7',
-      legacyHeaders: false,
-      message: { success: false, error: 'Too many requests, please slow down' },
-    }),
+    roleRateLimit(
+      config.isTest
+        ? { anonymous: 10_000, cashier: 10_000, manager: 10_000, admin: 10_000 }
+        : DEFAULT_ROLE_LIMITS,
+    ),
   );
   app.use(express.json({ limit: '100kb' }));
   app.use(compression());
