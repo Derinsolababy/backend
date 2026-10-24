@@ -15,6 +15,7 @@ import productRoutes from '@/routes/products.routes';
 import storeRoutes from '@/routes/store.routes';
 import transactionRoutes from '@/routes/transactions.routes';
 import userRoutes from '@/routes/users.routes';
+import { isDatabaseHealthy } from '@/utils/database';
 import { logger } from '@/utils/logger';
 
 export function createApp(): express.Express {
@@ -50,8 +51,11 @@ export function createApp(): express.Express {
   }
 
   app.get('/health', (_req, res) => {
-    res.json({
-      status: 'OK',
+    const database = isDatabaseHealthy() ? 'up' : 'down';
+    // Load balancers take a 503 as "send traffic elsewhere".
+    res.status(database === 'up' ? 200 : 503).json({
+      status: database === 'up' ? 'OK' : 'DEGRADED',
+      database,
       timestamp: new Date().toISOString(),
       version: process.env.npm_package_version ?? '0.2.0',
       environment: config.env,

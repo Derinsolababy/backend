@@ -121,7 +121,15 @@ export async function connectDatabase(path: string = config.database.path): Prom
   if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
   db = new DatabaseSync(path);
   db.exec('PRAGMA foreign_keys = ON;');
-  if (path !== ':memory:') db.exec('PRAGMA journal_mode = WAL;');
+  // Under load, a writer can find the database briefly locked. Wait up to 5s
+  // for the lock instead of failing immediately with SQLITE_BUSY.
+  db.exec('PRAGMA busy_timeout = 5000;');
+  if (path !== ':memory:') {
+    // WAL lets reads continue during writes; NORMAL sync is safe with WAL
+    // and avoids an fsync on every commit.
+    db.exec('PRAGMA journal_mode = WAL;');
+    db.exec('PRAGMA synchronous = NORMAL;');
+  }
   db.exec(SCHEMA);
   logger.debug(`Database ready at ${path}`);
   return db;
@@ -130,6 +138,15 @@ export async function connectDatabase(path: string = config.database.path): Prom
 export function getDb(): DatabaseSync {
   if (!db) throw new Error('Database not connected. Call connectDatabase() first.');
   return db;
+}
+
+/** True when the database answers a trivial query. Used by /health. */
+export function isDatabaseHealthy(): boolean {
+  try {
+    return db?.prepare('SELECT 1 AS ok').get()?.ok === 1;
+  } catch {
+    return false;
+  }
 }
 
 export function closeDatabase(): void {
