@@ -45,6 +45,17 @@ export async function me(req: Request, res: Response): Promise<void> {
   sendSuccess(res, toPublicUser(user));
 }
 
+/**
+ * Issues a fresh token for a still-valid session, so a till that stays open
+ * all day does not sign the cashier out mid-shift. The new token carries the
+ * user's current role, so role changes take effect on the next refresh.
+ */
+export async function refresh(req: Request, res: Response): Promise<void> {
+  const user = UserModel.findById(req.user!.sub);
+  if (!user) throw new AppError('Account no longer exists', 401);
+  sendSuccess(res, session(user));
+}
+
 export async function updateMe(req: Request, res: Response): Promise<void> {
   const user = UserModel.findById(req.user!.sub);
   if (!user) throw notFound('User');

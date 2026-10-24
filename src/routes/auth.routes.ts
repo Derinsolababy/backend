@@ -26,6 +26,7 @@ router.post(
 );
 router.post('/login', credentialLimiter, validateBody(loginSchema), asyncHandler(auth.login));
 router.get('/me', authenticate, asyncHandler(auth.me));
+router.post('/refresh', authenticate, asyncHandler(auth.refresh));
 router.patch('/me', authenticate, validateBody(updateProfileSchema), asyncHandler(auth.updateMe));
 
 export default router;
