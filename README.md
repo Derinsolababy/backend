@@ -334,3 +334,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 Built with ❤️ for the Stellar ecosystem
+
+## Fix for Issue #193: Test coverage below 40 percent for payment module
+
+Increase test coverage for the payment processing module to at least 80 percent by adding unit and integration tests. The current low coverage leaves critical paths untested.
