@@ -338,3 +338,5 @@ Built with ❤️ for the Stellar ecosystem
 ## Fix for Issue #193: Test coverage below 40 percent for payment module
 
 Increase test coverage for the payment processing module to at least 80 percent by adding unit and integration tests. The current low coverage leaves critical paths untested.
+
+<!-- fix: issue #193 - [TEST-009] Test coverage below 40% for payment processing module -->
